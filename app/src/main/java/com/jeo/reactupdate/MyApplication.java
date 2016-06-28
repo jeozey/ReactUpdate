@@ -11,6 +11,6 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-//        HorsePush.getInstance(getApplicationContext(), "http://192.168.211.166:8889", "test");// <------ 加入这个代码
+        HorsePush.getInstance(getApplicationContext(), "http://192.168.211.166:8889", "test");// <------ 加入这个代码
     }
 }

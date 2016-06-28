@@ -19,15 +19,15 @@ public class HorsePushPatch {
 	 * @return
 	 */
 	static {
-		System.loadLibrary("HorsePushPatch");
+		System.loadLibrary("bsdiff");
 	}
-
-	public static native int patch(String oldFilePath, String newFilePath, String patchPath);
+//
+	public static native int bspatch(String oldFilePath, String newFilePath, String patchPath);
 
 	public static int horsePushPatch(String oldFilePath, String newFilePath, String patchPath){
 		if(!(new File(oldFilePath).exists() && new File(patchPath).exists()))
 			return -1;
-		return patch(oldFilePath,newFilePath,patchPath);
+		return bspatch(oldFilePath,newFilePath,patchPath);
 	}
 
 

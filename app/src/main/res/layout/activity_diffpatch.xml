@@ -1,0 +1,29 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.skywds.android.bsdiffpatch.MainActivity" 
+	android:orientation="vertical"
+	>
+
+    <Button 
+        android:id="@+id/bsdiff_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="bsdiff"
+        />
+    <Button 
+        android:id="@+id/bspatch_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="bspatch"
+        />
+    
+    <TextView 
+        android:id="@+id/info_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="apk文件"
+        />
+
+</LinearLayout>

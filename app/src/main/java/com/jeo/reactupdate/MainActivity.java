@@ -30,7 +30,7 @@ public class MainActivity extends ReactActivity {
      */
     @Override
     protected boolean getUseDeveloperSupport() {
-        return BuildConfig.DEBUG;
+        return true;
     }
 
     /**
@@ -45,19 +45,19 @@ public class MainActivity extends ReactActivity {
     }
 
 
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        startActivity(new Intent().setClass(getApplicationContext(), HorsePushStartPage.class));// <------ 加入这个代码，使用启动屏
-//    }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        startActivity(new Intent().setClass(getApplicationContext(), HorsePushStartPage.class));// <------ 加入这个代码，使用启动屏
+    }
 
-//    @Override
-//    protected String getJSBundleFile() {
-//        return HorsePush.getJSBundleFile(this); // <------ 加入这个代码告诉rn通过本地启动
-//    }
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        HorsePush.reCheckUpdate();//<------每次从后台返回都会尝试更新
-//    }
+    @Override
+    protected String getJSBundleFile() {
+        return HorsePush.getJSBundleFile(this); // <------ 加入这个代码告诉rn通过本地启动
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        HorsePush.reCheckUpdate();//<------每次从后台返回都会尝试更新
+    }
 }
