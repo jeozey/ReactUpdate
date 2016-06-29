@@ -2,13 +2,16 @@ package com.jeo.reactupdate;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 import com.reactnative.horsepush.HorsePush;
+import com.reactnative.horsepush.HorsePushMd5;
 import com.reactnative.horsepush.HorsePushStartPage;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,7 +51,13 @@ public class MainActivity extends ReactActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startActivity(new Intent().setClass(getApplicationContext(), HorsePushStartPage.class));// <------ 加入这个代码，使用启动屏
+        try {
+           int appVersionCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+            Toast.makeText(getBaseContext(),"版本号:"+appVersionCode,Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+        }
+
+//        startActivity(new Intent().setClass(getApplicationContext(), HorsePushStartPage.class));// <------ 加入这个代码，使用启动屏
     }
 
     @Override

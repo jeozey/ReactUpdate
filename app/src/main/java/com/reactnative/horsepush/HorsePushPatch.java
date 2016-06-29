@@ -1,5 +1,7 @@
 package com.reactnative.horsepush;
 
+import com.skywds.android.bsdiffpatch.JniApi;
+
 import java.io.File;
 
 /**
@@ -18,16 +20,17 @@ public class HorsePushPatch {
 	 * @param patchPath  示例:/sdcard/xx.patch
 	 * @return
 	 */
-	static {
-		System.loadLibrary("bsdiff");
-	}
-//
-	public static native int bspatch(String oldFilePath, String newFilePath, String patchPath);
+//	static {
+//		System.loadLibrary("bsdiff");
+//	}
+////
+//	public static native int bspatch(String oldFilePath, String newFilePath, String patchPath);
 
 	public static int horsePushPatch(String oldFilePath, String newFilePath, String patchPath){
 		if(!(new File(oldFilePath).exists() && new File(patchPath).exists()))
 			return -1;
-		return bspatch(oldFilePath,newFilePath,patchPath);
+//		return bspatch(oldFilePath,newFilePath,patchPath);
+		return JniApi.bspatch(oldFilePath,newFilePath,patchPath);
 	}
 
 

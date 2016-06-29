@@ -4,7 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := bsdiff
 
-LOCAL_MODULE_FILENAME :=libbsdiff
+LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)
 
 LOCAL_LDLIBS :=-llog
 
@@ -28,6 +28,6 @@ LOCAL_SRC_FILES := com_skywds_android_bsdiffpatch_JniApi.c	\
 				
 #LOCAL_STATIC_LIBRARIES := libbz
 
-#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
 
-include $(BUILD_EXECUTABLE)
+#include $(BUILD_EXECUTABLE)

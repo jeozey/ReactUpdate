@@ -12,6 +12,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.lidroid.xutils.HttpUtils;
 import com.lidroid.xutils.exception.HttpException;
@@ -19,6 +20,7 @@ import com.lidroid.xutils.http.RequestParams;
 import com.lidroid.xutils.http.ResponseInfo;
 import com.lidroid.xutils.http.callback.RequestCallBack;
 import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
+import com.lidroid.xutils.util.LogUtils;
 
 import org.json.JSONObject;
 
@@ -31,6 +33,7 @@ import java.io.InputStream;
  * Created by techbin on 2016/3/18 0018.
  */
 public class HorsePush {
+    private static final String TAG = HorsePush.class.getName();
     private static HorsePush instanceHorsepush = null;
     private static AlertDialog.Builder instanceAlertDialog = null;
     private static String HORSE_PUSH_WORK_PATH = "/mnt/sdcard/";//js文件夹路径,这个路径运行的时候会改变
@@ -197,19 +200,23 @@ public class HorsePush {
                     @Override
                     public void onLoading(long total, long current, boolean isUploading) {
                         super.onLoading(total, current, isUploading);
-                        //总共大小  Log.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
+                        //总共大小
+                        LogUtils.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
                     }
 
                     @Override
                     public void onStart() {
-                    } //  LogUtils.i("开始下载");
+                        LogUtils.i("开始下载");
+                    }
 
                     @Override
                     public void onFailure(HttpException arg0, String arg1) {
-                    }//  下载失败"
+                        LogUtils.i("下载失败");
+                    }
 
                     @Override
                     public void onSuccess(ResponseInfo<File> arg0) {
+                        LogUtils.i("下载成功");
                         HorsePushModule.setSharedPreferences(mActivity, "startpageimg", HORSE_PUSH_START_PAGE_IMG_FILE_NAME);
                         new File(HORSE_PUSH_WORK_PATH + nowStartPageImg).delete();
 
@@ -282,7 +289,7 @@ public class HorsePush {
             @Override
             public void onSuccess(ResponseInfo<String> responseInfo) {
                 updateInfo(responseInfo.result);
-                //System.out.println("返回的json字符串：" + responseInfo.result);
+                LogUtils.i("返回的json字符串：" + responseInfo.result);
             }
 
             @Override
@@ -371,24 +378,28 @@ public class HorsePush {
                     @Override
                     public void onLoading(long total, long current, boolean isUploading) {
                         super.onLoading(total, current, isUploading);
-                        //总共大小  Log.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
+                        //总共大小
+                        LogUtils.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
                     }
 
                     @Override
                     public void onStart() {
-                    } //  LogUtils.i("开始下载");
+                        LogUtils.i("开始下载");
+                    }
 
                     @Override
                     public void onFailure(HttpException arg0, String arg1) {
+                        LogUtils.i("下载失败:"+arg1);
                         File f = new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t");
                         f.delete();
                         finishStartPage(2000);
 
-                    }//  下载失败"
+                    }
 
                     @Override
                     public void onSuccess(ResponseInfo<File> arg0) {
-                        //Toast.makeText(mContext, "下载了=>" + String.valueOf(downTag), 1).show();
+                        LogUtils.i("下载成功");
+                        Toast.makeText(mContext, "下载了=>" + String.valueOf(downTag), 1).show();
                         switch (downTag) {
 
                             case DOWN_JS_PATCH:
@@ -399,8 +410,10 @@ public class HorsePush {
                                         HORSE_PUSH_WORK_PATH + netMd5 + ".t");
                                 new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t").delete();
                                 if (patchResult == 0) {
+                                    Log.e(TAG, "下载patch并且合并成功" );
                                     downloadFileSuccess(downTag);
                                 } else {
+                                    Log.e(TAG, "下载patch合并失败,准备下载完整包" );
                                     downloadFile(downTag == DOWN_JS_PATCH ? DOWN_JS : DOWN_JAVA);
                                 }
                                 break;
@@ -468,8 +481,9 @@ public class HorsePush {
         } catch (Exception e) {
         }
 
-        if (!tempFileMd5.equals(javaDownlinkMd5) || mActivity == null) {
+        if (!tempFileMd5.equalsIgnoreCase(javaDownlinkMd5) || mActivity == null) {
             if (ACTIVITY_TAG != DOWN_JAVA) {
+                Log.e(TAG, "合并的包md5校验失败,开始下载完整包:"+tempFileMd5+"@@"+ javaDownlinkMd5);
                 downloadFile(DOWN_JAVA);
             }
             return;
@@ -502,7 +516,7 @@ public class HorsePush {
         }
         //Toast.makeText(mContext, "22222" + tempFileMd5 + "---" + jsDownlinkMd5, 1).show();
         finishStartPage(3000);
-        if (!tempFileMd5.equals(jsDownlinkMd5) || mActivity == null)
+        if (!tempFileMd5.equalsIgnoreCase(jsDownlinkMd5) || mActivity == null)
             return;
 
 
