@@ -4,25 +4,44 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
-    sourceSets.main {
-        jni.srcDirs = []
-        jniLibs.srcDir "src/main/libs"
-    }
+    signingConfigs {
+        release {
+            storeFile file("\\key\\wisp.keystore")
+            keyAlias "wisp"
+            storePassword "rjsoft"
+            keyPassword "rjsoft"
+        }
+        debug {
+            storeFile file("\\key\\wisp.keystore")
+            keyAlias "wisp"
+            storePassword "rjsoft"
+            keyPassword "rjsoft"
+        }
 
+    }
     defaultConfig {
         applicationId "com.jeo.reactupdate"
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0"
+        versionName "1.1"
         ndk {
             moduleName "bsdiff"
-            ldLibs 'log'
+            ldLibs "log", "z", "m"
+            abiFilters "armeabi","armeabi-v7a","x86"
         }
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled false // 是否混淆
+            shrinkResources false // 是否去除无效的资源文件
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false // 是否混淆
+            shrinkResources false // 是否去除无效的资源文件
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -38,54 +57,47 @@ android {
 //        //it’s own ndk-build process
 //        jni.srcDirs = [];
 //    }
-//    // Tell Gradle the run the ndkBuild task when compiling
-//    tasks.withType(JavaCompile) {
-//        compileTask -> compileTask.dependsOn ndkBuild
+//
+//    task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
+//        println('compiling jni code with ndk-build...')
+//        def ndkDir = android.ndkDirectory
+//        if (System.properties['os.name'].toLowerCase().contains('windows')) {
+//            commandLine "$ndkDir/ndk-build.cmd",
+//                    '-C', file('src/main/jni').absolutePath
+//            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
+//        } else {
+//            commandLine "$ndkDir/ndk-build",
+//                    '-C', file('src/main/jni').absolutePath
+//            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
+//        }
 //    }
 //
-//    // This task utilizes the Android.mk file defined in src/main/jni so that you
-//    // have more control over the build parameters (like library inclusion)
-//    task ndkBuild(type: Exec) { //println ('Hello'+file('src/main/jni').absolutePath)
-//        commandLine 'ndk-build', '-C', file('src/main/jni').absolutePath
-//        //commandLine 'echo \"123\"'
+//    task cleanNative(type: Exec, description: 'Clean JNI object files') {
+//        def ndkDir = android.ndkDirectory
+//        if (System.properties['os.name'].toLowerCase().contains('windows')) {
+//            commandLine "$ndkDir/ndk-build.cmd",
+//                    '-C', file('src/main/jni').absolutePath,
+//                    'clean'
+//        } else {
+//            commandLine "$ndkDir/ndk-build",
+//                    '-C', file('src/main/jni').absolutePath,
+//                    'clean'
+//        }
 //    }
-
-    task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
-        println('compiling jni code with ndk-build...')
-        def ndkDir = android.ndkDirectory
-        if (System.properties['os.name'].toLowerCase().contains('windows')) {
-            commandLine "$ndkDir/ndk-build.cmd",
-                    '-C', file('src/main/jni').absolutePath
-            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
-        } else {
-            commandLine "$ndkDir/ndk-build",
-                    '-C', file('src/main/jni').absolutePath
-            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
-        }
-    }
-
-    task cleanNative(type: Exec, description: 'Clean JNI object files') {
-        def ndkDir = android.ndkDirectory
-        if (System.properties['os.name'].toLowerCase().contains('windows')) {
-            commandLine "$ndkDir/ndk-build.cmd",
-                    '-C', file('src/main/jni').absolutePath,
-                    'clean'
-        } else {
-            commandLine "$ndkDir/ndk-build",
-                    '-C', file('src/main/jni').absolutePath,
-                    'clean'
-        }
-    }
-
-    clean.dependsOn 'cleanNative'
-
-    tasks.withType(JavaCompile) {
-        compileTask -> compileTask.dependsOn buildNative
-    }
+//
+//    clean.dependsOn 'cleanNative'
+//
+//    tasks.withType(JavaCompile) {
+//        compileTask -> compileTask.dependsOn buildNative
+//    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile files('libs/xUtils-2.6.14.jar')
+    compile 'com.squareup.okhttp3:okhttp:3.3.1'
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    compile group: 'com.google.code.gson', name: 'gson', version: '1.7.2'
+
+//    compile files('libs/xUtils-2.6.14.jar')
     compile 'com.facebook.react:react-native:+'
 }

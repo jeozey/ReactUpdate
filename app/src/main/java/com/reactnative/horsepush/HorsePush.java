@@ -14,13 +14,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.lidroid.xutils.HttpUtils;
-import com.lidroid.xutils.exception.HttpException;
-import com.lidroid.xutils.http.RequestParams;
-import com.lidroid.xutils.http.ResponseInfo;
-import com.lidroid.xutils.http.callback.RequestCallBack;
-import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
-import com.lidroid.xutils.util.LogUtils;
+import com.squareup.okhttp.Request;
 
 import org.json.JSONObject;
 
@@ -28,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 
 /**
  * Created by techbin on 2016/3/18 0018.
@@ -177,7 +172,7 @@ public class HorsePush {
         }
     }
 
-    private void updateStartPageImg(String imgurl) {
+    private void updateStartPageImg(final String imgurl) {
 
         if ("".equals(imgurl)) {
             HorsePushModule.setSharedPreferences(mActivity, "startpageimg", HORSE_PUSH_START_PAGE_IMG_FILE_NAME);
@@ -193,35 +188,25 @@ public class HorsePush {
         if (HORSE_PUSH_START_PAGE_IMG_FILE_NAME.equals(nowStartPageImg))
             return;
 
+        DownTask task = new DownTask(imgurl, HORSE_PUSH_WORK_PATH + HORSE_PUSH_START_PAGE_IMG_FILE_NAME, null, new DownTask.DownTaskCallBack() {
+            @Override
+            public void onSucc() {
+                LogUtils.i("下载成功");
+                HorsePushModule.setSharedPreferences(mActivity, "startpageimg", HORSE_PUSH_START_PAGE_IMG_FILE_NAME);
+                new File(HORSE_PUSH_WORK_PATH + nowStartPageImg).delete();
+            }
 
-        HttpUtils http = new HttpUtils();
-        http.download(imgurl, HORSE_PUSH_WORK_PATH + HORSE_PUSH_START_PAGE_IMG_FILE_NAME, true, true,
-                new RequestCallBack<File>() {
-                    @Override
-                    public void onLoading(long total, long current, boolean isUploading) {
-                        super.onLoading(total, current, isUploading);
-                        //总共大小
-                        LogUtils.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
-                    }
+            @Override
+            public void onFailure() {
+                LogUtils.i("下载失败");
+            }
 
-                    @Override
-                    public void onStart() {
-                        LogUtils.i("开始下载");
-                    }
-
-                    @Override
-                    public void onFailure(HttpException arg0, String arg1) {
-                        LogUtils.i("下载失败");
-                    }
-
-                    @Override
-                    public void onSuccess(ResponseInfo<File> arg0) {
-                        LogUtils.i("下载成功");
-                        HorsePushModule.setSharedPreferences(mActivity, "startpageimg", HORSE_PUSH_START_PAGE_IMG_FILE_NAME);
-                        new File(HORSE_PUSH_WORK_PATH + nowStartPageImg).delete();
-
-                    }
-                });
+            @Override
+            public void onProgerss(Integer progress) {
+                LogUtils.i("下载中：" +progress);
+            }
+        });
+        task.execute();
     }
 
     //得到bundle目录
@@ -266,65 +251,57 @@ public class HorsePush {
             appVersionCode = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).versionCode;
         } catch (Exception e) {
         }
-        RequestParams params = new RequestParams();
-        params.addBodyParameter("channel", channel);
-        params.addBodyParameter("md5", jsFileMd5);
-        params.addBodyParameter("appversioncode", String.valueOf(appVersionCode));
-        params.addBodyParameter("isdev", HorsePushUtils.isDev() ? "1" : "0");
-        params.addBodyParameter("sdkint", String.valueOf(Build.VERSION.SDK_INT));
-        params.addBodyParameter("screensize", HorsePushUtils.getScreenSize(mContext));
-        params.addBodyParameter("brand", android.os.Build.BRAND);
-        params.addBodyParameter("model", android.os.Build.MODEL);
-        params.addBodyParameter("extradata", HorsePushModule.getExtraData(mContext));
+        HashMap<String,String> params = new HashMap();
+        params.put("channel", channel);
+        params.put("md5", jsFileMd5);
+        params.put("appversioncode", String.valueOf(appVersionCode));
+        params.put("isdev", HorsePushUtils.isDev() ? "1" : "0");
+        params.put("sdkint", String.valueOf(Build.VERSION.SDK_INT));
+        params.put("screensize", HorsePushUtils.getScreenSize(mContext));
+        params.put("brand", android.os.Build.BRAND);
+        params.put("model", android.os.Build.MODEL);
+        params.put("extradata", HorsePushModule.getExtraData(mContext));
 
         //Log.d("11111111111111111----------", String.valueOf(System.currentTimeMillis()));
-
-        HttpUtils http = new HttpUtils(requestRetryActionTime[requestRetryCount++]);
-        //设置当前请求的缓存时间
-        http.configCurrentHttpCacheExpiry(0 * 1000);
-        //设置默认请求的缓存时间
-        http.configDefaultHttpCacheExpiry(0);
-
-        http.send(HttpMethod.GET, updateServer, params, new RequestCallBack<String>() {
+        Log.e(TAG, "checkUpdate: "+updateServer);
+        OkHttpClientManager.postAsyn(updateServer, new OkHttpClientManager.ResultCallback<UpdateInfo>() {
             @Override
-            public void onSuccess(ResponseInfo<String> responseInfo) {
-                updateInfo(responseInfo.result);
-                LogUtils.i("返回的json字符串：" + responseInfo.result);
-            }
-
-            @Override
-            public void onFailure(HttpException e, String s) {
-                //    Toast.makeText(mContext, "shibai" + e.toString(), 1).show();
+            public void onError(Request request, Exception e) {
                 if (requestRetryCount < requestRetryActionTime.length) {
                     checkUpdate();//重试
                     return;
                 }
                 finishStartPage(2000);
-            }// 接口回调
+            }
 
-        });
+            @Override
+            public void onResponse(UpdateInfo response) {
+                updateInfo(response);
+                LogUtils.i("返回的json字符串：" + response.toString());
+            }
+        },params);
+        Log.e(TAG, "checkUpdate over ");
     }
 
     //更新信息
-    private void updateInfo(String jsonStr) {
+    private void updateInfo(UpdateInfo updateInfo) {
         try {
-            JSONObject jsonObj = new JSONObject(jsonStr);
-            if ("200".equals(jsonObj.getString("code"))) {
-                JSONObject j = jsonObj.getJSONObject("data");
-                javaVersionCode = j.getInt("javaVersionCode");
-                javaVersionInfo = j.getString("javaVersionInfo");
-                javaPatchDownlink = j.getString("javaPatchDownlink");
-                javaDownlink = j.getString("javaDownlink");
-                javaDownlinkMd5 = j.getString("javaDownlinkMd5");
-                javaForceUpdate = j.getBoolean("javaForceUpdate");
+            if (updateInfo.getCode()==200) {
+                UpdateInfo.DataBean j = updateInfo.getData();
+                javaVersionCode = j.getJavaVersionCode();
+                javaVersionInfo = j.getJavaVersionInfo();
+                javaPatchDownlink = j.getJavaPatchDownlink();
+                javaDownlink = j.getJavaDownlink();
+                javaDownlinkMd5 = j.getJavaDownlinkMd5();
+                javaForceUpdate = j.isJavaForceUpdate();
 
-                jsVersionInfo = j.getString("jsVersionInfo");
-                jsPatchDownlink = j.getString("jsPatchDownlink");
-                jsDownlink = j.getString("jsDownlink");
-                jsDownlinkMd5 = j.getString("jsDownlinkMd5");
-                jsForceUpdate = j.getBoolean("jsForceUpdate");
+                jsVersionInfo = j.getJsVersionInfo();
+                jsPatchDownlink = j.getJsPatchDownlink();
+                jsDownlink = j.getJsDownlink();
+                jsDownlinkMd5 = j.getJsDownlinkMd5();
+                jsForceUpdate = j.isJsForceUpdate();
 
-                updateStartPageImg(j.getString("startpageimg"));//更新系统图片
+                updateStartPageImg(j.getStartpageimg());//更新系统图片
 
                 if (javaVersionCode > appVersionCode) {
                     downloadFile(!"".equals(javaPatchDownlink) ? DOWN_JAVA_PATCH : DOWN_JAVA);
@@ -373,62 +350,54 @@ public class HorsePush {
         }
 
         //Toast.makeText(mContext, "zouxiazai", 1).show();
-        HttpUtils http = new HttpUtils();
-        http.download(url, HORSE_PUSH_WORK_PATH + netMd5 + ".t", true, true, new RequestCallBack<File>() {
-                    @Override
-                    public void onLoading(long total, long current, boolean isUploading) {
-                        super.onLoading(total, current, isUploading);
-                        //总共大小
-                        LogUtils.i("下载中：" + total);  //已经下载大小   LogUtils.i("下载中：" + current);
-                    }
+        DownTask downTask = new DownTask(url, HORSE_PUSH_WORK_PATH + netMd5 + ".t", null, new DownTask.DownTaskCallBack() {
+            @Override
+            public void onSucc() {
+                LogUtils.i("下载成功");
+                Toast.makeText(mContext, "下载了=>" + String.valueOf(downTag), Toast.LENGTH_SHORT).show();
+                switch (downTag) {
 
-                    @Override
-                    public void onStart() {
-                        LogUtils.i("开始下载");
-                    }
-
-                    @Override
-                    public void onFailure(HttpException arg0, String arg1) {
-                        LogUtils.i("下载失败:"+arg1);
-                        File f = new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t");
-                        f.delete();
-                        finishStartPage(2000);
-
-                    }
-
-                    @Override
-                    public void onSuccess(ResponseInfo<File> arg0) {
-                        LogUtils.i("下载成功");
-                        Toast.makeText(mContext, "下载了=>" + String.valueOf(downTag), 1).show();
-                        switch (downTag) {
-
-                            case DOWN_JS_PATCH:
-                            case DOWN_JAVA_PATCH:
-                                String oldApkFilePath = downTag == DOWN_JS_PATCH ? getJSBundleFile() : getSourceApkPath();
-                                int patchResult = HorsePushPatch.horsePushPatch(oldApkFilePath,
-                                        HORSE_PUSH_WORK_PATH + netMd5 + fileName,
-                                        HORSE_PUSH_WORK_PATH + netMd5 + ".t");
-                                new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t").delete();
-                                if (patchResult == 0) {
-                                    Log.e(TAG, "下载patch并且合并成功" );
-                                    downloadFileSuccess(downTag);
-                                } else {
-                                    Log.e(TAG, "下载patch合并失败,准备下载完整包" );
-                                    downloadFile(downTag == DOWN_JS_PATCH ? DOWN_JS : DOWN_JAVA);
-                                }
-                                break;
-
-                            case DOWN_JS:
-                            case DOWN_JAVA:
-                                File f = new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t");
-                                File n = new File(HORSE_PUSH_WORK_PATH + netMd5 + fileName);
-                                f.renameTo(n);
-                                downloadFileSuccess(downTag);
-                                break;
+                    case DOWN_JS_PATCH:
+                    case DOWN_JAVA_PATCH:
+                        String oldApkFilePath = downTag == DOWN_JS_PATCH ? getJSBundleFile() : getSourceApkPath();
+                        int patchResult = HorsePushPatch.horsePushPatch(oldApkFilePath,
+                                HORSE_PUSH_WORK_PATH + netMd5 + fileName,
+                                HORSE_PUSH_WORK_PATH + netMd5 + ".t");
+                        new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t").delete();
+                        if (patchResult == 0) {
+                            Log.e(TAG, "下载patch并且合并成功" );
+                            downloadFileSuccess(downTag);
+                        } else {
+                            Log.e(TAG, "下载patch合并失败,准备下载完整包" );
+                            downloadFile(downTag == DOWN_JS_PATCH ? DOWN_JS : DOWN_JAVA);
                         }
-                    }
+                        break;
+
+                    case DOWN_JS:
+                    case DOWN_JAVA:
+                        File f = new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t");
+                        File n = new File(HORSE_PUSH_WORK_PATH + netMd5 + fileName);
+                        f.renameTo(n);
+                        downloadFileSuccess(downTag);
+                        break;
                 }
-        );
+            }
+
+            @Override
+            public void onFailure() {
+                LogUtils.i("下载失败");
+                File f = new File(HORSE_PUSH_WORK_PATH + netMd5 + ".t");
+                f.delete();
+                finishStartPage(2000);
+            }
+
+            @Override
+            public void onProgerss(Integer progress) {
+                LogUtils.i("下载进度：" + progress);
+            }
+        });
+        Log.e(TAG, "downloadFile: "+url );
+        downTask.execute();
     }
 
     //下载文件成功
