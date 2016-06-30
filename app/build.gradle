@@ -25,11 +25,10 @@ android {
         targetSdkVersion 23
         versionCode 2
         versionName "1.1"
-        ndk {
-            moduleName "bsdiff"
-            ldLibs "log", "z", "m"
-            abiFilters "armeabi","armeabi-v7a","x86"
-        }
+//        ndk {
+//            moduleName "bsdiff"
+//            ldLibs "log", "z", "m"
+//        }
     }
     buildTypes {
         release {
@@ -45,51 +44,51 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-//    // We need to set the libs dir for the output and the srcdirs to null to
-//        // prevent the gradle ndk hooks from firing.  We need to depend on Android.mk
-//    // NOTE: this appears to break the android studio 'android' project view
-//    // (at least, it hides the jni directory…)
-//    sourceSets.main {
-//        //Tell Gradle where to put the compiled library
-//        jniLibs.srcDir 'src/main/libs'
-//
-//        //hide the ‘jni’ folder so that the automatic gradle build doesn’t try to run
-//        //it’s own ndk-build process
-//        jni.srcDirs = [];
-//    }
-//
-//    task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
-//        println('compiling jni code with ndk-build...')
-//        def ndkDir = android.ndkDirectory
-//        if (System.properties['os.name'].toLowerCase().contains('windows')) {
-//            commandLine "$ndkDir/ndk-build.cmd",
-//                    '-C', file('src/main/jni').absolutePath
-//            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
-//        } else {
-//            commandLine "$ndkDir/ndk-build",
-//                    '-C', file('src/main/jni').absolutePath
-//            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
-//        }
-//    }
-//
-//    task cleanNative(type: Exec, description: 'Clean JNI object files') {
-//        def ndkDir = android.ndkDirectory
-//        if (System.properties['os.name'].toLowerCase().contains('windows')) {
-//            commandLine "$ndkDir/ndk-build.cmd",
-//                    '-C', file('src/main/jni').absolutePath,
-//                    'clean'
-//        } else {
-//            commandLine "$ndkDir/ndk-build",
-//                    '-C', file('src/main/jni').absolutePath,
-//                    'clean'
-//        }
-//    }
-//
-//    clean.dependsOn 'cleanNative'
-//
-//    tasks.withType(JavaCompile) {
-//        compileTask -> compileTask.dependsOn buildNative
-//    }
+    // We need to set the libs dir for the output and the srcdirs to null to
+        // prevent the gradle ndk hooks from firing.  We need to depend on Android.mk
+    // NOTE: this appears to break the android studio 'android' project view
+    // (at least, it hides the jni directory…)
+    sourceSets.main {
+        //Tell Gradle where to put the compiled library
+        jniLibs.srcDir 'src/main/libs'
+
+        //hide the ‘jni’ folder so that the automatic gradle build doesn’t try to run
+        //it’s own ndk-build process
+        jni.srcDirs = [];
+    }
+
+    task buildNative(type: Exec, description: 'Compile JNI source via NDK') {
+        println('compiling jni code with ndk-build...')
+        def ndkDir = android.ndkDirectory
+        if (System.properties['os.name'].toLowerCase().contains('windows')) {
+            commandLine "$ndkDir/ndk-build.cmd",
+                    '-C', file('src/main/jni').absolutePath
+            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
+        } else {
+            commandLine "$ndkDir/ndk-build",
+                    '-C', file('src/main/jni').absolutePath
+            // Additional ndk-build arguments, such as NDK_DEBUG, can be provided here
+        }
+    }
+
+    task cleanNative(type: Exec, description: 'Clean JNI object files') {
+        def ndkDir = android.ndkDirectory
+        if (System.properties['os.name'].toLowerCase().contains('windows')) {
+            commandLine "$ndkDir/ndk-build.cmd",
+                    '-C', file('src/main/jni').absolutePath,
+                    'clean'
+        } else {
+            commandLine "$ndkDir/ndk-build",
+                    '-C', file('src/main/jni').absolutePath,
+                    'clean'
+        }
+    }
+
+    clean.dependsOn 'cleanNative'
+
+    tasks.withType(JavaCompile) {
+        compileTask -> compileTask.dependsOn buildNative
+    }
 }
 
 dependencies {

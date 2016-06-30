@@ -6,7 +6,8 @@ LOCAL_MODULE    := bsdiff
 
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)
 
-LOCAL_LDLIBS :=-llog
+
+LOCAL_LDLIBS    := -lm -llog
 
 LOCAL_SRC_FILES := com_skywds_android_bsdiffpatch_JniApi.c	\
 				blocksort.c	\

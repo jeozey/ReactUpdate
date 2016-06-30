@@ -3,7 +3,6 @@ package com.reactnative.horsepush;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.speech.tts.Voice;
 
 import java.io.BufferedInputStream;
 import java.io.File;
